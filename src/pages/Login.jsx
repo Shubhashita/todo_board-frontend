@@ -1,3 +1,4 @@
+import config from '../config';
 import React from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +14,7 @@ const Login = ({ onToggle }) => {
         e.preventDefault();
         setError('');
         try {
-            const response = await axios.post('http://localhost:5000/user/login', {
+            const response = await axios.post(`${config.API_BASE_URL}/user/login`, {
                 email,
                 password
             });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 import { FiUser, FiPhone, FiMapPin, FiTrash2, FiEdit2, FiMoon, FiMonitor, FiArrowDown, FiArrowUp, FiMenu } from 'react-icons/fi';
 import { BsToggleOn, BsToggleOff } from 'react-icons/bs';
 
@@ -20,7 +21,7 @@ const Settings = ({ settings, setSettings, toggleSidebar }) => {
             const token = localStorage.getItem('token');
             if (!token) return;
             try {
-                const response = await axios.get('http://localhost:5000/user/me', {
+                const response = await axios.get(`${config.API_BASE_URL}/user/me`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (response.data.success) {
@@ -40,7 +41,7 @@ const Settings = ({ settings, setSettings, toggleSidebar }) => {
     const handleUpdateName = async () => {
         const token = localStorage.getItem('token');
         try {
-            const response = await axios.put('http://localhost:5000/user/update', { name: newName }, {
+            const response = await axios.put(`${config.API_BASE_URL}/user/update`, { name: newName }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 import { useNavigate } from 'react-router-dom';
 import SideBar from './SideBar';
 import Notes from './Notes';
@@ -46,7 +47,8 @@ const Home = () => {
             return;
         }
         try {
-            const response = await axios.get('http://localhost:5000/todo/list', {
+
+            const response = await axios.get(`${config.API_BASE_URL}/todo/list`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.data.success) {
@@ -85,7 +87,7 @@ const Home = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
         try {
-            const response = await axios.get('http://localhost:5000/label/list', getAuthHeader());
+            const response = await axios.get(`${config.API_BASE_URL}/label/list`, getAuthHeader());
             if (response.data.success) {
                 setDbLabels(response.data.data);
             }
@@ -151,7 +153,7 @@ const Home = () => {
                 };
             }
 
-            await axios.post('http://localhost:5000/todo/create', payload, { headers });
+            await axios.post(`${config.API_BASE_URL}/todo/create`, payload, { headers });
             fetchNotes();
         } catch (error) {
             console.error("Error creating note:", error);
@@ -225,7 +227,7 @@ const Home = () => {
             }
 
             // 1. Basic Update (Handles labels too now)
-            await axios.put(`http://localhost:5000/todo/update/${updatedNote.id}`, payload, { headers });
+            await axios.put(`${config.API_BASE_URL}/todo/update/${updatedNote.id}`, payload, { headers });
 
             // Optimistic UI Update
             setNotes(prevNotes => prevNotes.map(n => n.id === updatedNote.id ? { ...n, ...updatedNote } : n));
@@ -238,7 +240,7 @@ const Home = () => {
 
     const handleDelete = async (id, action = 'bin') => {
         try {
-            await axios.delete(`http://localhost:5000/todo/delete/${id}?action=${action}`, getAuthHeader());
+            await axios.delete(`${config.API_BASE_URL}/todo/delete/${id}?action=${action}`, getAuthHeader());
             fetchNotes();
         } catch (error) {
             console.error("Error deleting note:", error);
@@ -247,7 +249,7 @@ const Home = () => {
 
     const handleArchive = async (id, archiveStatus) => {
         try {
-            await axios.put(`http://localhost:5000/todo/update/${id}`, { isArchived: archiveStatus }, getAuthHeader());
+            await axios.put(`${config.API_BASE_URL}/todo/update/${id}`, { isArchived: archiveStatus }, getAuthHeader());
             fetchNotes();
         } catch (error) {
             console.error("Error archiving note:", error);
@@ -256,7 +258,7 @@ const Home = () => {
 
     const handlePin = async (id, pinStatus) => {
         try {
-            await axios.put(`http://localhost:5000/todo/update/${id}`, { isPinned: pinStatus }, getAuthHeader());
+            await axios.put(`${config.API_BASE_URL}/todo/update/${id}`, { isPinned: pinStatus }, getAuthHeader());
             fetchNotes(); // Optimistic update would be better but fetch is safer
         } catch (error) {
             console.error("Error pinning note:", error);
@@ -267,7 +269,7 @@ const Home = () => {
     // --- Label Handlers ---
     const handleCreateLabel = async (name) => {
         try {
-            const response = await axios.post('http://localhost:5000/label/create', { name }, getAuthHeader());
+            const response = await axios.post(`${config.API_BASE_URL}/label/create`, { name }, getAuthHeader());
             await fetchLabels();
             return response.data.data;
         } catch (error) {
@@ -283,7 +285,7 @@ const Home = () => {
 
         try {
             if (isValidId) {
-                await axios.put(`http://localhost:5000/label/update/${id}`, { name: newName }, getAuthHeader());
+                await axios.put(`${config.API_BASE_URL}/label/update/${id}`, { name: newName }, getAuthHeader());
             } else {
                 // Legacy Label Rename: find by index or name
                 let targetLabelName = '';
@@ -324,7 +326,7 @@ const Home = () => {
 
             // Real DB Label: Backend handles deletion
             if (isValidId) {
-                await axios.delete(`http://localhost:5000/label/delete/${id}`, getAuthHeader());
+                await axios.delete(`${config.API_BASE_URL}/label/delete/${id}`, getAuthHeader());
             }
 
             // Ensure frontend consistency by manually removing label from mapped notes
