@@ -1,4 +1,3 @@
-import config from '../config';
 import React from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -9,12 +8,13 @@ const Login = ({ onToggle }) => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [error, setError] = React.useState('');
+    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         try {
-            const response = await axios.post(`${config.API_BASE_URL}/user/login`, {
+            const response = await axios.post(`${API_BASE_URL}/user/login`, {
                 email,
                 password
             });
