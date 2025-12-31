@@ -8,7 +8,9 @@ const Login = ({ onToggle }) => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [error, setError] = React.useState('');
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    // Dynamic API URL: Force localhost if on localhost to ignore potential production .env overrides during dev
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_BASE_URL = isLocalhost ? 'http://localhost:5000' : (process.env.REACT_APP_API_URL || 'https://todo-board-backend-9jov.onrender.com');
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -21,12 +23,27 @@ const Login = ({ onToggle }) => {
             if (response.data.success) {
                 const token = response.data.data.token;
                 localStorage.setItem('token', token);
+                console.log('Login Response:', response.data);
+                const userData = response.data.data;
+                // Fallback to 'user' if role is undefined, but log it
+                const role = userData.role || 'user';
+                console.log('User Role (processed):', role);
+
                 localStorage.setItem('user', JSON.stringify({
-                    name: response.data.data.name,
-                    email: response.data.data.email,
-                    id: response.data.data.id
+                    name: userData.name,
+                    email: userData.email,
+                    id: userData.id,
+                    role: role
                 }));
-                navigate('/home');
+
+                // Case-insensitive check for admin role
+                if (role && role.toLowerCase() === 'admin') {
+                    console.log('Redirecting to Admin Portal');
+                    navigate('/admin');
+                } else {
+                    console.log('Redirecting to Home');
+                    navigate('/home');
+                }
             } else {
                 setError(response.data.message || 'Login failed');
             }

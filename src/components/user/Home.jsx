@@ -39,7 +39,9 @@ const Home = () => {
         return { headers: { Authorization: `Bearer ${token}` } };
     };
 
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    // Dynamic API URL: Use localhost if on localhost
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_BASE_URL = isLocalhost ? 'http://localhost:5000' : (process.env.REACT_APP_API_URL || 'https://todo-board-backend-9jov.onrender.com');
 
     const fetchNotes = async () => {
         const token = localStorage.getItem('token');
@@ -114,24 +116,36 @@ const Home = () => {
     // --- API Handlers ---
 
     const handleCreate = async (noteObject) => {
+        console.log('handleCreate called with:', noteObject);
         try {
             let payload;
             let headers = getAuthHeader().headers;
 
-            if ((noteObject.files && noteObject.files.length > 0) || noteObject.file) {
+            // Check if we have files to upload
+            const hasFiles = (noteObject.files && noteObject.files.length > 0) || noteObject.file;
+
+            if (hasFiles) {
+                console.log('Creating note with attachments...');
                 const formData = new FormData();
                 formData.append('title', noteObject.title || 'Untitled');
+
+                // Fix description appending for FormData
                 if (noteObject.content) {
-                    // Backend expects description as array of strings
                     const descLines = noteObject.content.split('\n');
-                    descLines.forEach(line => formData.append('description[]', line));
+                    // Append each line with the same key 'description' to simulate an array
+                    descLines.forEach(line => formData.append('description', line));
+                } else {
+                    // Send empty string if no content to allow backend to process it
+                    formData.append('description', '');
                 }
+
                 formData.append('status', 'open');
-                formData.append('isPinned', noteObject.isPinned || false);
-                formData.append('isArchived', noteObject.isArchived || false);
+                formData.append('isPinned', String(noteObject.isPinned || false)); // Convert boolean to string for FormData
+                formData.append('isArchived', String(noteObject.isArchived || false));
 
                 // Handle multiple files
                 if (noteObject.files && noteObject.files.length > 0) {
+                    console.log(`Appending ${noteObject.files.length} files to FormData`);
                     Array.from(noteObject.files).forEach((file) => {
                         formData.append('files', file);
                     });
@@ -142,8 +156,8 @@ const Home = () => {
                 }
 
                 payload = formData;
-                headers['Content-Type'] = 'multipart/form-data';
             } else {
+                console.log('Creating simple note (JSON)...');
                 payload = {
                     title: noteObject.title || 'Untitled',
                     description: noteObject.content ? noteObject.content.split('\n') : [],
@@ -153,14 +167,25 @@ const Home = () => {
                 };
             }
 
-            await axios.post(`${API_BASE_URL}/todo/create`, payload, { headers });
+            console.log('Sending POST request to:', `${API_BASE_URL}/todo/create`);
+            const response = await axios.post(`${API_BASE_URL}/todo/create`, payload, { headers });
+            console.log('Create response:', response.data);
+
+            // Reverting optimistic update to ensure data consistency as backend may return partial data
             fetchNotes();
+
+            return response.data;
         } catch (error) {
             console.error("Error creating note:", error);
+            if (error.response) {
+                console.error("Response data:", error.response.data);
+            }
+            throw error; // Re-throw to let caller know
         }
     };
 
     const handleUpdate = async (updatedNote, skipFetch = false) => {
+        console.log('handleUpdate called with:', updatedNote);
         try {
             let payload;
             let headers = getAuthHeader().headers;
@@ -177,8 +202,9 @@ const Home = () => {
             const validLabelIds = labelIds.filter(id => id);
 
             if ((updatedNote.files && updatedNote.files.length > 0) || updatedNote.file || updatedNote.deletedAttachmentFilenames) {
+                console.log('Preparing FormData for update...');
                 const formData = new FormData();
-                formData.append('title', updatedNote.title);
+                formData.append('title', updatedNote.title || 'Untitled');
                 if (updatedNote.content) {
                     const descLines = updatedNote.content.split('\n');
                     descLines.forEach(line => formData.append('description', line));
@@ -202,6 +228,7 @@ const Home = () => {
 
                 // Handle multiple files
                 if (updatedNote.files && updatedNote.files.length > 0) {
+                    console.log(`Appending ${updatedNote.files.length} files to FormData`);
                     Array.from(updatedNote.files).forEach((file) => {
                         formData.append('files', file);
                     });
@@ -215,7 +242,7 @@ const Home = () => {
                 // headers['Content-Type'] = 'multipart/form-data'; // axios sets this auto
             } else {
                 payload = {
-                    title: updatedNote.title,
+                    title: updatedNote.title || 'Untitled',
                     description: updatedNote.content ? updatedNote.content.split('\n') : [],
                     status: updatedNote.isTrashed ? 'bin' : (updatedNote.status === 'inProgress' ? 'in-progress' : (updatedNote.status === 'completed' ? 'completed' : 'open')),
                     isPinned: updatedNote.isPinned,
@@ -227,14 +254,17 @@ const Home = () => {
             }
 
             // 1. Basic Update (Handles labels too now)
-            await axios.put(`${API_BASE_URL}/todo/update/${updatedNote.id}`, payload, { headers });
+            console.log('Sending PUT request to:', `${API_BASE_URL}/todo/update/${updatedNote.id}`);
+            const res = await axios.put(`${API_BASE_URL}/todo/update/${updatedNote.id}`, payload, { headers });
+            console.log('Update response:', res.data);
 
-            // Optimistic UI Update
-            setNotes(prevNotes => prevNotes.map(n => n.id === updatedNote.id ? { ...n, ...updatedNote } : n));
-
-            if (!skipFetch) fetchNotes();
+            // Always fetch fresh data
+            await fetchNotes();
         } catch (error) {
             console.error("Error updating note:", error);
+            if (error.response) {
+                console.error("Response data:", error.response.data);
+            }
         }
     };
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Auth from './pages/Auth';
-import Home from './components/Home';
+import Home from './components/user/Home';
+import AdminPortal from './components/admin/AdminPortal';
 import './index.css';
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Auth />} />
         <Route path="/Home" element={<Home />} />
+        <Route path="/admin" element={<AdminPortal />} />
       </Routes>
     </Router>
   );
