@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiUser, FiPhone, FiMapPin, FiTrash2, FiEdit2, FiMoon, FiMonitor, FiArrowDown, FiArrowUp, FiMenu } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiUser, FiPhone, FiMapPin, FiTrash2, FiEdit2, FiMoon, FiMonitor, FiArrowDown, FiArrowUp, FiMenu, FiLogOut } from 'react-icons/fi';
 import { BsToggleOn, BsToggleOff } from 'react-icons/bs';
 
 const Settings = ({ settings, setSettings, toggleSidebar }) => {
-    // Local state for profile
+    const navigate = useNavigate();
     const [user, setUser] = useState(() => {
         const savedUser = localStorage.getItem('user');
         return savedUser ? JSON.parse(savedUser) : {
@@ -14,7 +15,7 @@ const Settings = ({ settings, setSettings, toggleSidebar }) => {
     });
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(user.name);
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -56,12 +57,33 @@ const Settings = ({ settings, setSettings, toggleSidebar }) => {
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+        const token = localStorage.getItem('token');
+        try {
+            await axios.put(`${API_BASE_URL}/user/remove-account`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/');
+        } catch (error) {
+            console.error('Failed to delete account', error);
+            alert(error.response?.data?.message || 'Failed to delete account. Please try again.');
+        }
+    };
+
     const toggleNewNotePosition = () => {
         setSettings(prev => ({ ...prev, addNewAtBottom: !prev.addNewAtBottom }));
     };
 
     const toggleTheme = () => {
-        // Just toggling state for now, logic to apply theme would be global
         setSettings(prev => ({ ...prev, theme: prev.theme === 'dark' ? 'system' : 'dark' }));
     };
 
@@ -123,8 +145,17 @@ const Settings = ({ settings, setSettings, toggleSidebar }) => {
                                 <p className="text-lg text-white/60 mb-6">{user.email}</p>
 
                                 <div className="flex flex-col gap-4 sm:flex-row">
-                                    <button className="flex items-center gap-2 bg-red-500/20 text-red-200 px-5 py-3 rounded-xl hover:bg-red-500/30 transition-colors border border-red-500/30">
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        className="flex items-center gap-2 bg-red-500/20 text-red-200 px-5 py-3 rounded-xl hover:bg-red-500/30 transition-colors border border-red-500/30"
+                                    >
                                         <FiTrash2 /> Delete Account
+                                    </button>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex items-center gap-2 bg-white/10 text-white/80 px-5 py-3 rounded-xl hover:bg-white/20 transition-colors border border-white/20"
+                                    >
+                                        <FiLogOut /> Log Out
                                     </button>
                                 </div>
                             </div>
