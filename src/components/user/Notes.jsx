@@ -40,7 +40,7 @@ const SortableNote = ({ note, onClick, children, className }) => {
 const Notes = ({ notes, setNotes, settings, labels, setLabels, onCreate, onUpdate, onDelete, onArchive, onPin, filterStatus, onCreateLabel, isLabelView, currentLabel, filterDate, toggleSidebar, onSearch }) => {
     const getAttachmentUrl = (attachment) => {
         if (attachment.filename) {
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+            const API_URL = process.env.REACT_APP_API_URL;
             return `${API_URL}/upload/${attachment.filename}`;
         }
         return attachment.url;
