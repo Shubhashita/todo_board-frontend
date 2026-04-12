@@ -8,9 +8,7 @@ const Login = ({ onToggle }) => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [error, setError] = React.useState('');
-    // Dynamic API URL: Force localhost if on localhost to ignore potential production .env overrides during dev
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const API_BASE_URL = isLocalhost ? 'http://localhost:5000' : (process.env.REACT_APP_API_URL || 'https://todo-board-backend-9jov.onrender.com');
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -78,6 +76,7 @@ const Login = ({ onToggle }) => {
                     <input
                         type="password"
                         required
+                        minLength={8}
                         className="w-full h-[3.5rem] px-4 rounded-lg border border-labelColor text-[1.6rem] text-labelColor bg-transparent outline-none focus:border-labelColor"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}

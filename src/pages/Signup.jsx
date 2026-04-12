@@ -9,9 +9,7 @@ const Signup = ({ onToggle }) => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
 
-    // Dynamic API URL: Force localhost if on localhost
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const API_BASE_URL = isLocalhost ? 'http://localhost:5000' : (process.env.REACT_APP_API_URL || 'https://todo-board-backend-9jov.onrender.com');
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
 
     const handleSignup = async (e) => {
         e.preventDefault();
@@ -77,6 +75,7 @@ const Signup = ({ onToggle }) => {
                     <input
                         type="password"
                         required
+                        minLength={8}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full h-[3.5rem] px-4 rounded-lg border border-labelColor text-[1.6rem] text-labelColor bg-transparent outline-none focus:border-labelColor"
@@ -91,6 +90,7 @@ const Signup = ({ onToggle }) => {
                     <input
                         type="password"
                         required
+                        minLength={8}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className="w-full h-[3.5rem] px-4 rounded-lg border border-labelColor text-[1.6rem] text-labelColor bg-transparent outline-none focus:border-labelColor"
