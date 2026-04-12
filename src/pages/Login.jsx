@@ -8,24 +8,32 @@ const Login = ({ onToggle }) => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [error, setError] = React.useState('');
+    const [loading, setLoading] = React.useState(false);
+    const [slowWarning, setSlowWarning] = React.useState(false);
     const API_BASE_URL = process.env.REACT_APP_API_URL;
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
+        setSlowWarning(false);
+
+        // Show "waking up server" message if it takes more than 5 seconds
+        const slowTimer = setTimeout(() => setSlowWarning(true), 5000);
+
         try {
             const response = await axios.post(`${API_BASE_URL}/user/login`, {
                 email,
                 password
             });
+
+            clearTimeout(slowTimer);
+
             if (response.data.success) {
                 const token = response.data.data.token;
                 localStorage.setItem('token', token);
-                console.log('Login Response:', response.data);
                 const userData = response.data.data;
-                // Fallback to 'user' if role is undefined, but log it
-                const role = userData.role || 'user';
-                console.log('User Role (processed):', role);
+                const role = userData.role;
 
                 localStorage.setItem('user', JSON.stringify({
                     name: userData.name,
@@ -34,20 +42,21 @@ const Login = ({ onToggle }) => {
                     role: role
                 }));
 
-                // Case-insensitive check for admin role
                 if (role && role.toLowerCase() === 'admin') {
-                    console.log('Redirecting to Admin Portal');
                     navigate('/admin');
                 } else {
-                    console.log('Redirecting to Home');
                     navigate('/home');
                 }
             } else {
                 setError(response.data.message || 'Login failed');
             }
         } catch (err) {
+            clearTimeout(slowTimer);
             setError(err.response?.data?.message || 'Login failed');
             console.error(err);
+        } finally {
+            setLoading(false);
+            setSlowWarning(false);
         }
     };
 
@@ -58,11 +67,18 @@ const Login = ({ onToggle }) => {
 
                 {error && <p className="text-red-500 text-center text-lg mb-4">{error}</p>}
 
+                {slowWarning && !error && (
+                    <p className="text-amber-500 text-center text-[1.3rem] mb-4 animate-pulse">
+                        ⏳ Server is waking up, please wait...
+                    </p>
+                )}
+
                 <div className="input-group relative my-8 w-full">
                     <input
                         type="email"
                         required
-                        className="w-full h-[3.5rem] px-4 rounded-lg border border-labelColor text-[1.6rem] text-labelColor bg-transparent outline-none focus:border-labelColor"
+                        disabled={loading}
+                        className="w-full h-[3.5rem] px-4 rounded-lg border border-labelColor text-[1.6rem] text-labelColor bg-transparent outline-none focus:border-labelColor disabled:opacity-50"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
@@ -77,7 +93,8 @@ const Login = ({ onToggle }) => {
                         type="password"
                         required
                         minLength={8}
-                        className="w-full h-[3.5rem] px-4 rounded-lg border border-labelColor text-[1.6rem] text-labelColor bg-transparent outline-none focus:border-labelColor"
+                        disabled={loading}
+                        className="w-full h-[3.5rem] px-4 rounded-lg border border-labelColor text-[1.6rem] text-labelColor bg-transparent outline-none focus:border-labelColor disabled:opacity-50"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
@@ -91,7 +108,18 @@ const Login = ({ onToggle }) => {
                     <a href="#" className="text-labelColor decoration-0 text-[1.4rem] capitalize transition-all duration-500 hover:text-mainColor">forgot password?</a>
                 </div>
 
-                <button type="submit" className="btn w-full h-[4rem] bg-red-gradient text-white capitalize text-[1.6rem] font-medium rounded-lg cursor-pointer shadow-md border-none outline-none">login</button>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn w-full h-[4rem] bg-red-gradient text-white capitalize text-[1.6rem] font-medium rounded-lg cursor-pointer shadow-md border-none outline-none disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {loading ? (
+                        <>
+                            <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            <span>logging in...</span>
+                        </>
+                    ) : 'login'}
+                </button>
 
                 <div className="link text-center text-[1.4rem] text-labelColor mt-10">
                     <p>Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); onToggle(); }} className="signup-link capitalize text-mainColor font-semibold decoration-0 transition-all duration-500 hover:text-[#da4453]"> sign up</a></p>
