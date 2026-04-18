@@ -52,7 +52,8 @@ const Login = ({ onToggle }) => {
             }
         } catch (err) {
             clearTimeout(slowTimer);
-            setError(err.response?.data?.message || 'Login failed');
+            const errorMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed';
+            setError(errorMsg);
             console.error(err);
         } finally {
             setLoading(false);

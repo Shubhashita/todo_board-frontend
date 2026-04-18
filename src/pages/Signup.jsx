@@ -43,7 +43,8 @@ const Signup = ({ onToggle }) => {
             }
         } catch (err) {
             clearTimeout(slowTimer);
-            setError(err.response?.data?.message || err.message || 'Signup failed');
+            const errorMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'Signup failed';
+            setError(errorMsg);
         } finally {
             setLoading(false);
             setSlowWarning(false);
