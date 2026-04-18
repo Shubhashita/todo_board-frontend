@@ -16,8 +16,12 @@ const Auth = () => {
                 <p className="text-[2.5rem] mt-2 font-light tracking-wide italic text-gray-200">Clear task, Clear mind</p>
             </div>
             <div className={`wrapper relative w-[30rem] h-[45rem] sm:w-[35rem] ${isSignUp ? 'animated-signin' : 'animated-signup'}`}>
-                <Login onToggle={toggleForm} />
-                <Signup onToggle={toggleForm} />
+                <div className={isSignUp ? 'pointer-events-none opacity-0 invisible transition-all duration-500' : 'pointer-events-auto opacity-100 visible transition-all duration-500'}>
+                    <Login onToggle={toggleForm} />
+                </div>
+                <div className={!isSignUp ? 'pointer-events-none opacity-0 invisible transition-all duration-500' : 'pointer-events-auto opacity-100 visible transition-all duration-500'}>
+                    <Signup onToggle={toggleForm} />
+                </div>
             </div>
         </div>
     );
